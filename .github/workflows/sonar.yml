@@ -72,7 +72,8 @@ jobs:
           SONAR_HOST_URL: http://3.80.138.17:9000
         with:
           args: >
-            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}_${{ github.actor }}_${{ github.repository_id }}
+            -Dsonar.projectName=${{ github.event.repository.name }}-${{ github.actor }}
             -Dsonar.sources=.
             -Dsonar.login=squ_4f7ac18302a201ff8063adbbe59d1c2f8bdb4307
             -Dsonar.python.coverage.reportPaths=coverage.xml
