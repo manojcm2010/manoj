@@ -4,8 +4,8 @@ import mysql.connector
 
 app = Flask(__name__)
 
-SONAR_URL = "http://localhost:9000"
-TOKEN = "squ_066aadcefdf3cb1d7d0b87dacf28c06d16815ddc"
+SONAR_URL = "http://54.174.202.113:9000/"
+TOKEN = "squ_aa760b4289151ae8ad517aa31c66da62ab713f43"
 
 DB = {
     "host": "localhost",
