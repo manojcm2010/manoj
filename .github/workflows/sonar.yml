@@ -2,7 +2,9 @@ name: SonarQube Scan
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
 
 jobs:
   sonar:
@@ -10,8 +12,15 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v4
+      # ---------------------------
+      # Checkout Code
+      # ---------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # ---------------------------
+      # Setup Java (Required)
+      # ---------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -19,39 +28,48 @@ jobs:
           java-version: 17
 
       # ---------------------------
-      # Python Setup
+      # Setup Python
       # ---------------------------
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
+      # ---------------------------
+      # Install Dependencies
+      # ---------------------------
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
       # ---------------------------
-      # Run Tests + Coverage
+      # Fix Import Path (IMPORTANT)
+      # ---------------------------
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+
+      # ---------------------------
+      # Run Tests with Coverage
       # ---------------------------
       - name: Run tests
         run: |
           pytest tests/ --cov=. --cov-report=xml
 
       # ---------------------------
-      # Verify coverage
+      # Verify Coverage File
       # ---------------------------
-      - name: Check coverage file
+      - name: Check coverage
         run: |
           ls -l coverage.xml
 
       # ---------------------------
-      # Sonar Scan
+      # SonarQube Scan
       # ---------------------------
-      - name: Sonar Scan
+      - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
-          SONAR_HOST_URL: http://44.201.203.105:9000
+          SONAR_HOST_URL: http://54.162.248.144:9000
         with:
           args: >
             -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
