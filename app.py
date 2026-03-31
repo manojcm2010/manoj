@@ -4,8 +4,8 @@ import mysql.connector
 
 app = Flask(__name__)
 
-SONAR_URL = "http://54.174.202.113:9000/"
-TOKEN = "squ_aa760b4289151ae8ad517aa31c66da62ab713f43"
+SONAR_URL = "http://3.80.138.17:9000"
+TOKEN = "squ_4f7ac18302a201ff8063adbbe59d1c2f8bdb4307"
 
 DB = {
     "host": "localhost",
@@ -14,13 +14,11 @@ DB = {
     "database": "sonar_dashboard"
 }
 
-
-# ---------------- DB CONNECTION ---------------- #
 def db_conn():
     return mysql.connector.connect(**DB)
 
 
-# ---------------- FETCH PROJECTS ---------------- #
+# -------- FETCH PROJECTS -------- #
 def fetch_projects():
     try:
         r = requests.get(f"{SONAR_URL}/api/projects/search", auth=(TOKEN, ""))
@@ -29,7 +27,7 @@ def fetch_projects():
         return []
 
 
-# ---------------- FETCH METRICS ---------------- #
+# -------- FETCH METRICS -------- #
 def fetch_metrics(project_key):
     try:
         params = {
@@ -37,9 +35,10 @@ def fetch_metrics(project_key):
             "metricKeys": "bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density"
         }
         r = requests.get(f"{SONAR_URL}/api/measures/component", params=params, auth=(TOKEN, ""))
-        data = r.json()
 
+        data = r.json()
         metrics = {}
+
         for m in data.get("component", {}).get("measures", []):
             metrics[m["metric"]] = float(m.get("value", 0))
 
@@ -48,7 +47,7 @@ def fetch_metrics(project_key):
         return {}
 
 
-# ---------------- FETCH QUALITY ---------------- #
+# -------- FETCH QUALITY -------- #
 def fetch_quality(project_key):
     try:
         r = requests.get(
@@ -61,7 +60,7 @@ def fetch_quality(project_key):
         return "UNKNOWN"
 
 
-# ---------------- FETCH RATINGS ---------------- #
+# -------- FETCH RATINGS -------- #
 def fetch_ratings(project_key):
     try:
         params = {
@@ -69,6 +68,7 @@ def fetch_ratings(project_key):
             "metricKeys": "reliability_rating,security_rating,sqale_rating"
         }
         r = requests.get(f"{SONAR_URL}/api/measures/component", params=params, auth=(TOKEN, ""))
+
         data = r.json()
 
         rating_map = {"1.0": "A", "2.0": "B", "3.0": "C", "4.0": "D", "5.0": "E"}
@@ -82,7 +82,7 @@ def fetch_ratings(project_key):
         return {}
 
 
-# ---------------- FETCH ISSUES ---------------- #
+# -------- FETCH ISSUES -------- #
 def fetch_issues(project_key):
     try:
         r = requests.get(
@@ -95,7 +95,7 @@ def fetch_issues(project_key):
         return []
 
 
-# ---------------- SAVE DATA ---------------- #
+# -------- SAVE DATA -------- #
 def save_data(project_key, metrics, quality, ratings, issues):
     conn = db_conn()
     cur = conn.cursor()
@@ -145,7 +145,7 @@ def save_data(project_key, metrics, quality, ratings, issues):
     conn.close()
 
 
-# ---------------- ROUTES ---------------- #
+# -------- ROUTES -------- #
 
 @app.route("/", methods=["GET", "POST"])
 def dashboard():
@@ -158,59 +158,28 @@ def dashboard():
         conn = db_conn()
         cur = conn.cursor(dictionary=True)
 
-        # Metrics
-        cur.execute("""
-            SELECT * FROM metrics 
-            WHERE project_key=%s 
-            ORDER BY id DESC LIMIT 1
-        """, (selected_project,))
+        cur.execute("SELECT * FROM metrics WHERE project_key=%s ORDER BY id DESC LIMIT 1", (selected_project,))
         metrics = cur.fetchone()
 
-        # Quality
-        cur.execute("""
-            SELECT * FROM quality_gate 
-            WHERE project_key=%s 
-            ORDER BY id DESC LIMIT 1
-        """, (selected_project,))
+        cur.execute("SELECT * FROM quality_gate WHERE project_key=%s ORDER BY id DESC LIMIT 1", (selected_project,))
         quality = cur.fetchone()
 
-        # Ratings
-        cur.execute("""
-            SELECT reliability, security, maintainability 
-            FROM ratings 
-            WHERE project_key=%s 
-            ORDER BY id DESC LIMIT 1
-        """, (selected_project,))
-        r = cur.fetchone()
+        cur.execute("SELECT * FROM ratings WHERE project_key=%s ORDER BY id DESC LIMIT 1", (selected_project,))
+        ratings = cur.fetchone()
 
-        if r:
-            ratings = {
-                "reliability_rating": r["reliability"],
-                "security_rating": r["security"],
-                "sqale_rating": r["maintainability"]
-            }
-
-        # Issues
-        cur.execute("""
-            SELECT severity, message, file, line 
-            FROM issues 
-            WHERE project_key=%s 
-            ORDER BY id DESC LIMIT 10
-        """, (selected_project,))
+        cur.execute("SELECT * FROM issues WHERE project_key=%s ORDER BY id DESC LIMIT 10", (selected_project,))
         issues = cur.fetchall()
 
         cur.close()
         conn.close()
 
-    return render_template(
-        "dashboard.html",
-        projects=projects,
-        selected_project=selected_project,
-        metrics=metrics,
-        quality=quality,
-        ratings=ratings,
-        issues=issues
-    )
+    return render_template("dashboard.html",
+                           projects=projects,
+                           selected_project=selected_project,
+                           metrics=metrics,
+                           quality=quality,
+                           ratings=ratings,
+                           issues=issues)
 
 
 @app.route("/fetch/<project_key>")
@@ -225,6 +194,5 @@ def fetch_store(project_key):
     return redirect(url_for('dashboard'))
 
 
-# ---------------- RUN ---------------- #
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)
