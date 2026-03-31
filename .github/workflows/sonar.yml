@@ -65,7 +65,7 @@ jobs:
       - name: Sonar Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: squ_aa760b4289151ae8ad517aa31c66da62ab713f43
           SONAR_HOST_URL: http://54.174.202.113:9000
         with:
           args: >
