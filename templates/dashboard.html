@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sonar Dashboard</title>
+<style>
+body { font-family: Arial; background:#f5f7fb; padding:20px; }
+h1 { text-align:center; }
+
+.container { display:flex; justify-content:center; flex-wrap:wrap; }
+
+.card {
+    background:white;
+    padding:20px;
+    margin:10px;
+    border-radius:10px;
+    width:200px;
+    text-align:center;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.bugs{border-left:5px solid red;}
+.vuln{border-left:5px solid green;}
+.smells{border-left:5px solid orange;}
+.coverage{border-left:5px solid blue;}
+
+.pass{color:green;}
+.fail{color:red;}
+
+button {
+    padding:8px 15px;
+    background:#3498db;
+    color:white;
+    border:none;
+    border-radius:5px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📊 Sonar Dashboard</h1>
+
+<form method="POST" style="text-align:center">
+<select name="project" required>
+<option value="">Select Project</option>
+{% for p in projects %}
+<option value="{{p.key}}">{{p.name}}</option>
+{% endfor %}
+</select>
+<button>Load</button>
+</form>
+
+{% if selected_project %}
+<div style="text-align:center;margin:10px;">
+<a href="/fetch/{{selected_project}}">
+<button>Fetch Latest Data</button>
+</a>
+</div>
+{% endif %}
+
+{% if metrics %}
+<div class="container">
+<div class="card bugs">Bugs: {{metrics.bugs}}</div>
+<div class="card vuln">Vulnerabilities: {{metrics.vulnerabilities}}</div>
+<div class="card smells">Code Smells: {{metrics.code_smells}}</div>
+<div class="card coverage">Coverage: {{metrics.coverage}}%</div>
+</div>
+
+<h3 style="text-align:center">
+Quality: <span class="{{'pass' if quality.status=='OK' else 'fail'}}">
+{{quality.status}}
+</span>
+</h3>
+
+<h2>Issues</h2>
+<table border="1" width="100%">
+<tr><th>Severity</th><th>Message</th></tr>
+{% for i in issues %}
+<tr><td>{{i.severity}}</td><td>{{i.message}}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+
+</body>
+</html>
