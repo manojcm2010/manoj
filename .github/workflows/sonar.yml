@@ -79,7 +79,7 @@ jobs:
           SONAR_HOST_URL: http://54.162.248.144:9000
         with:
           args: >
-            -Dsonar.projectKey=gops601_sonar-template
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
             -Dsonar.sources=.
             -Dsonar.login=squ_4f7ac18302a201ff8063adbbe59d1c2f8bdb4307
             -Dsonar.python.coverage.reportPaths=coverage.xml
